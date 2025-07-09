@@ -1,0 +1,1 @@
+EXEC dbo.USP_CREATE_ALTER_AUDIT @BASE_PATH='C:\AuditLogs\' -- varchar(4000)

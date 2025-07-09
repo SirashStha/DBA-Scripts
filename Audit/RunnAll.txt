@@ -1,0 +1,59 @@
+# Set up the SQL Server connection
+$mainServer = "192.168.20.32"
+$mainUser = "sa"
+$mainPassword = "infodev"
+$scriptFile = "C:\Users\shirash.shrestha\Documents\SQL Server Management Studio\Audit\Procedure\AuditCreate.sql"  # Update the path to your script file
+
+# Load the SQL Server module (if necessary)
+# Import-Module SqlServer
+
+# Define the SQL connection string for the main server
+$connectionString = "Server=$mainServer;Database=comm_db;User Id=$mainUser;Password=$mainPassword;"
+
+# Get the list of servers, usernames, and passwords from the comm_db database
+$query = "SELECT DATASOURCE ServerName, DB_USER_ID UserName, DB_USER_PW UserPassword FROM dbo.CLIENT_MAST"
+
+# Create a SQL connection
+$connection = New-Object System.Data.SqlClient.SqlConnection($connectionString)
+$connection.Open()
+
+# Execute the query to get server credentials
+$command = $connection.CreateCommand()
+$command.CommandText = $query
+$reader = $command.ExecuteReader()
+
+# Loop through each server
+while ($reader.Read()) {
+    $serverName = $reader["ServerName"]
+    $userName = $reader["UserName"]
+    $userPassword = $reader["UserPassword"]
+
+    # Define the SQL connection string for the target server
+    $targetConnectionString = "Server=$serverName;Database=master;User Id=$userName;Password=$userPassword;"
+
+    # Read the script file content
+    $scriptContent = Get-Content -Path $scriptFile -Raw
+
+    # Execute the script on the target server
+    try {
+        $targetConnection = New-Object System.Data.SqlClient.SqlConnection($targetConnectionString)
+        $targetConnection.Open()
+
+        # Create a SQL command
+        $sqlCommand = $targetConnection.CreateCommand()
+        $sqlCommand.CommandText = $scriptContent
+
+        # Execute the command
+        $sqlCommand.ExecuteNonQuery()
+        Write-Host "Executed script on $serverName successfully."
+    } catch {
+        Write-Host "Failed to execute script on $serverName. Error: $_"
+    } finally {
+        # Close the connection
+        $targetConnection.Close()
+    }
+}
+
+# Close the reader and the main connection
+$reader.Close()
+$connection.Close()

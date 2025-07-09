@@ -1,0 +1,85 @@
+sudo hostnamectl set-hostname oracle-19c
+
+sudo vim /etc/hosts
+192.168.221.134 oraclelinux oraclelinux.oralab.local   (ip = 192.168.221.134, hostname=oraclelinux)
+
+cat /etc/selinux/config
+sudo sed -i s/SELINUX=enforcing/SELINUX=permissive/g /etc/selinux/config
+
+sudo dnf search preinstall
+sudo dnf install -y oracle-database-preinstall-19c.x86_64
+
+sudo dnf -y localinstall oracle-database-ee-19c-1.0-1.x86_64.rpm
+
+sudo -i
+
+
+export ORACLE_SID=DEMOCDB
+cp /etc/init.d/oracledb_ORCLCDB-19c /etc/init.d/oracledb_$ORACLE_SID-19c
+ls /etc/init.d/oracledb_$ORACLE_SID-19c
+cd /etc/init.d/
+grep export oracledb_DEMOCDB-19c
+
+sed -i 's/ORCLCDB/'"$ORACLE_SID"'/g' oracledb_DEMOCDB-19c
+sed -i 's/ORCLPDB1/DEMOPDB1/g' oracledb_DEMOCDB-19c
+
+cd /etc/sysconfig/
+cp /etc/sysconfig/oracledb_ORCLCDB-19c.conf /etc/sysconfig/oracledb_$ORACLE_SID-19c.conf
+cat oracledb_DEMOCDB-19c.conf 
+mkdir /u02
+chown -R oracle:oinstall /u02
+sed -i 's/opt/u02/' oracledb_DEMOCDB-19c.conf
+cat oracledb_DEMOCDB-19c.conf
+sed -i 's/1521/1522/' oracledb_DEMOCDB-19c.conf
+cat oracledb_DEMOCDB-19c.conf
+
+/etc/init.d/oracledb_DEMOCDB-19c configure
+
+exit
+sudo su - oracle
+
+vim .bash_profile
+
+umask 022
+export ORACLE_SID=DEMOCDB
+export ORACLE_BASE=/opt/oracle
+export ORACLE_HOME=/opt/oracle/product/19c/dbhome_1
+export PATH=$PATH:$ORACLE_HOME/bin
+
+source .bash_profile
+
+vim /etc/oratab
+N->Y
+
+ vim /etc/sysconfig/DEMOCDB.oracledbenv
+#create new : define environment variables
+
+ORACLE_BASE=/opt/oracle/
+ORACLE_HOME=/opt/oracle/product/19c/dbhome_1
+ORACLE_SID=DEMOCDB
+
+vim /usr/lib/systemd/system/DEMOCDB@oracledb.service
+[Unit]
+Description=Oracle Database 19c Service
+After=network.target
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/sysconfig/DEMOCDB.oracledbenv
+ExecStart=/opt/oracle/product/19c/dbhome_1/bin/dbstart $ORACLE_HOME
+ExecStop=/opt/oracle/product/19c/dbhome_1/bin/dbshut $ORACLE_HOME
+User=oracle
+
+[Install]
+WantedBy=multi-user.target  
+
+Deinstall
+set password for oracle user
+dbca -> remove database
+netca -> remove listener
+export CV_ASSUME_DISTID=OEL7.9
+/opt/oracle/product/19c/dbhome_1/deinstall/deinstall
+dnf search oracle-database
+sudo dnf remove -y oracle-database.....
+systemctl disable DEMOCDB
+

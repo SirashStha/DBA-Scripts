@@ -1,0 +1,26 @@
+
+CREATE DIRECTORY my_data_pump_dir AS '/opt/oracle/dumpfiles'
+
+SELECT directory_name, directory_path FROM dba_directories WHERE directory_name = 'my_data_pump_dir';
+
+
+
+impdp test/password@//localhost:1522/DEMOPDB1 directory=my_data_pump_dir dumpfile=TXN_HIS_LS_10700_20240929.DMP logfile=TXN_HIS_LS_10700_20240929.LOG remap_schema=namraj_web:test table_exists_action=truncate
+
+--
+sqlplus test/password@//localhost:1522/DEMOPDB1
+
+ALTER TABLE test.TXN_HIS_LS_10700_20240929 MODIFY DESCRIPTION VARCHAR2(100);
+
+--
+
+impdp test/password@//localhost:1522/DEMOPDB1 directory=my_data_pump_dir dumpfile=TXN_HIS_LS_12400_20240929.DMP logfile=TXN_HIS_LS_12400_20240929.LOG remap_schema=namraj_web:test table_exists_action=truncate
+
+--
+
+ALTER TABLE TEST.TXN_HIS_LS_12400_20240929 MODIFY DESCRIPTION VARCHAR2(64 BYTE);
+
+--
+
+sudo mv /home/admin/tmp/DP50/TXN_HIS_LS_12400_20240929.DMP /opt/oracle/dumpfiles/
+sudo mv /home/admin/tmp/DP50/TXN_HIS_LS_12400_20240929.LOG /opt/oracle/dumpfiles/
